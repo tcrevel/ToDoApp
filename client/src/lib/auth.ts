@@ -7,7 +7,9 @@ import {
   signInWithEmailAndPassword,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
-  signInWithEmailLink
+  signInWithEmailLink,
+  sendEmailVerification,
+  User
 } from "firebase/auth";
 import { create } from "zustand";
 
@@ -17,6 +19,7 @@ interface AuthStore {
     email: string | null;
     displayName: string | null;
     photoURL: string | null;
+    emailVerified: boolean;
   };
   loading: boolean;
   setUser: (user: any) => void;
@@ -44,6 +47,9 @@ export const signInWithGoogle = async () => {
 export const signInWithEmail = async (email: string, password: string) => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
+    if (!result.user.emailVerified) {
+      throw new Error("Please verify your email before signing in.");
+    }
     return result.user;
   } catch (error) {
     console.error("Error signing in with email:", error);
@@ -54,9 +60,20 @@ export const signInWithEmail = async (email: string, password: string) => {
 export const registerWithEmail = async (email: string, password: string) => {
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    return result.user;
+    await sendEmailVerification(result.user);
+    throw new Error("Please check your email to verify your account before signing in.");
   } catch (error) {
     console.error("Error registering with email:", error);
+    throw error;
+  }
+};
+
+export const resendVerificationEmail = async (user: User) => {
+  try {
+    await sendEmailVerification(user);
+    return true;
+  } catch (error) {
+    console.error("Error sending verification email:", error);
     throw error;
   }
 };
@@ -69,7 +86,6 @@ export const sendMagicLink = async (email: string) => {
 
   try {
     await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    // Save the email for verification when user returns
     localStorage.setItem('emailForSignIn', email);
     return true;
   } catch (error) {
@@ -85,13 +101,11 @@ export const completeMagicLinkSignIn = async () => {
 
   let email = localStorage.getItem('emailForSignIn');
   if (!email) {
-    // If email is not found in localStorage, we might need to ask the user again
     throw new Error("Email not found. Please try signing in again.");
   }
 
   try {
     const result = await signInWithEmailLink(auth, email, window.location.href);
-    // Clear email from storage
     localStorage.removeItem('emailForSignIn');
     return result.user;
   } catch (error) {
