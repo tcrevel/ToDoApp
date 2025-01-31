@@ -34,7 +34,7 @@ export default function Login() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/attached_assets/image_1738314380647.png" 
+              src="attached_assets/image_1738314437290.png" 
               alt="Firebase Logo" 
               className="h-12 w-12"
             />
@@ -49,7 +49,7 @@ export default function Login() {
             onClick={handleGoogleSignIn}
           >
             <img 
-              src="/attached_assets/image_1738314326351.png" 
+              src="attached_assets/image_1738314326351.png" 
               alt="Google Logo" 
               className="mr-2 h-5 w-5"
             />
