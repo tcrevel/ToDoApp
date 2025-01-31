@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithGoogle } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { SiFirebase } from "react-icons/si";
+import { SiFirebase, SiGoogle } from "react-icons/si";
 import { useLocation } from "wouter";
 import { AuthForm } from "@/components/auth/auth-form";
 import { Separator } from "@/components/ui/separator";
@@ -36,28 +36,28 @@ export default function Login() {
             <SiFirebase className="h-12 w-12 text-orange-500" />
           </div>
           <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Sign in to access your dashboard</CardDescription>
+          <CardDescription>Choose your preferred sign-in method</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <AuthForm onSuccess={handleAuthSuccess} />
+          <Button
+            variant="outline"
+            className="w-full py-6"
+            onClick={handleGoogleSignIn}
+          >
+            <SiGoogle className="mr-2 h-5 w-5" />
+            Continue with Google
+          </Button>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
+                Or use email
               </span>
             </div>
           </div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignIn}
-          >
-            <SiFirebase className="mr-2 h-4 w-4" />
-            Continue with Google
-          </Button>
+          <AuthForm onSuccess={handleAuthSuccess} />
         </CardContent>
       </Card>
     </div>
