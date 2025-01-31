@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithGoogle } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { SiFirebase, SiGoogle } from "react-icons/si";
+import { SiFirebase } from "react-icons/si";
+import { FcGoogle } from "react-icons/fc";
 import { useLocation } from "wouter";
 import { AuthForm } from "@/components/auth/auth-form";
 import { MagicLinkForm } from "@/components/auth/magic-link-form";
@@ -45,7 +46,7 @@ export default function Login() {
             className="w-full py-6"
             onClick={handleGoogleSignIn}
           >
-            <SiGoogle className="mr-2 h-5 w-5" />
+            <FcGoogle className="mr-2 h-5 w-5" />
             Continue with Google
           </Button>
           <div className="relative">
