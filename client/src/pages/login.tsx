@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signInWithGoogle } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { SiFirebase } from "react-icons/si";
 import { useLocation } from "wouter";
 import { AuthForm } from "@/components/auth/auth-form";
 import { MagicLinkForm } from "@/components/auth/magic-link-form";
@@ -34,7 +33,11 @@ export default function Login() {
       <Card className="w-[350px]">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <SiFirebase className="h-12 w-12 text-orange-500" />
+            <img 
+              src="/attached_assets/image_1738314380647.png" 
+              alt="Firebase Logo" 
+              className="h-12 w-12"
+            />
           </div>
           <CardTitle>Welcome Back</CardTitle>
           <CardDescription>Choose your preferred sign-in method</CardDescription>
