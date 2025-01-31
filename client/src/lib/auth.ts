@@ -4,7 +4,10 @@ import {
   signInWithPopup, 
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword 
+  signInWithEmailAndPassword,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from "firebase/auth";
 import { create } from "zustand";
 
@@ -54,6 +57,45 @@ export const registerWithEmail = async (email: string, password: string) => {
     return result.user;
   } catch (error) {
     console.error("Error registering with email:", error);
+    throw error;
+  }
+};
+
+export const sendMagicLink = async (email: string) => {
+  const actionCodeSettings = {
+    url: window.location.origin + '/magic-link-callback',
+    handleCodeInApp: true,
+  };
+
+  try {
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    // Save the email for verification when user returns
+    localStorage.setItem('emailForSignIn', email);
+    return true;
+  } catch (error) {
+    console.error("Error sending magic link:", error);
+    throw error;
+  }
+};
+
+export const completeMagicLinkSignIn = async () => {
+  if (!isSignInWithEmailLink(auth, window.location.href)) {
+    return null;
+  }
+
+  let email = localStorage.getItem('emailForSignIn');
+  if (!email) {
+    // If email is not found in localStorage, we might need to ask the user again
+    throw new Error("Email not found. Please try signing in again.");
+  }
+
+  try {
+    const result = await signInWithEmailLink(auth, email, window.location.href);
+    // Clear email from storage
+    localStorage.removeItem('emailForSignIn');
+    return result.user;
+  } catch (error) {
+    console.error("Error completing sign in with magic link:", error);
     throw error;
   }
 };

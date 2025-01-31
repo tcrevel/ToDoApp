@@ -9,12 +9,14 @@ import { onAuthStateChanged } from "firebase/auth";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import MagicLinkCallback from "@/pages/magic-link-callback";
 import { ProtectedRoute } from "@/components/protected-route";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/magic-link-callback" component={MagicLinkCallback} />
       <Route path="/dashboard">
         <ProtectedRoute>
           <Dashboard />

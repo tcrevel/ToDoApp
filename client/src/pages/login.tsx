@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { SiFirebase, SiGoogle } from "react-icons/si";
 import { useLocation } from "wouter";
 import { AuthForm } from "@/components/auth/auth-form";
-import { Separator } from "@/components/ui/separator";
+import { MagicLinkForm } from "@/components/auth/magic-link-form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Login() {
   const { toast } = useToast();
@@ -53,11 +54,22 @@ export default function Login() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or use email
+                Or choose another method
               </span>
             </div>
           </div>
-          <AuthForm onSuccess={handleAuthSuccess} />
+          <Tabs defaultValue="magic-link" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="magic-link">Magic Link</TabsTrigger>
+              <TabsTrigger value="password">Password</TabsTrigger>
+            </TabsList>
+            <TabsContent value="magic-link">
+              <MagicLinkForm />
+            </TabsContent>
+            <TabsContent value="password">
+              <AuthForm onSuccess={handleAuthSuccess} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
