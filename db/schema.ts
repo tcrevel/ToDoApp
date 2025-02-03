@@ -1,4 +1,5 @@
-import { pgTable, text, serial, integer, boolean, timestamp, relations } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { sql } from "drizzle-orm";
 
@@ -29,13 +30,13 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
-// Define relationships
-export const usersRelations = relations(users, ({ many }) => ({
+// Define relationships with proper TypeScript types
+export const usersRelations = relations(users, ({ many }: { many: any }) => ({
   tasks: many(tasks),
   notifications: many(notifications),
 }));
 
-export const tasksRelations = relations(tasks, ({ one, many }) => ({
+export const tasksRelations = relations(tasks, ({ one, many }: { one: any; many: any }) => ({
   user: one(users, {
     fields: [tasks.userId],
     references: [users.id],
@@ -43,7 +44,7 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   notifications: many(notifications),
 }));
 
-export const notificationsRelations = relations(notifications, ({ one }) => ({
+export const notificationsRelations = relations(notifications, ({ one }: { one: any }) => ({
   user: one(users, {
     fields: [notifications.userId],
     references: [users.id],
