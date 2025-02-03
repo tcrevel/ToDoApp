@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { insertTaskSchema } from "@db/schema";
-import type { InsertTask, SelectTag } from "@db/schema";
+import type { InsertTask, SelectTask, SelectTag } from "@db/schema";
 
 const CATEGORIES = [
   "Work",
@@ -34,7 +34,11 @@ const CATEGORIES = [
   "Others",
 ] as const;
 
-export function TaskForm() {
+interface TaskFormProps {
+  taskToEdit?: SelectTask & { tags?: SelectTag[] };
+}
+
+export function TaskForm({ taskToEdit }: TaskFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,45 +56,42 @@ export function TaskForm() {
   const form = useForm<InsertTask>({
     resolver: zodResolver(insertTaskSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      priority: "medium",
-      category: "others",
-      completed: false,
+      title: taskToEdit?.title || "",
+      description: taskToEdit?.description || "",
+      priority: taskToEdit?.priority || "medium",
+      category: taskToEdit?.category || "others",
+      completed: taskToEdit?.completed || false,
+      dueDate: taskToEdit?.dueDate || undefined,
     },
   });
 
+  useEffect(() => {
+    if (taskToEdit?.tags) {
+      setSelectedTags(taskToEdit.tags.map(tag => tag.id));
+    }
+  }, [taskToEdit]);
+
   const { mutate } = useMutation({
     mutationFn: async (values: InsertTask) => {
-      console.log('Creating task with data:', values);
+      const endpoint = taskToEdit 
+        ? `/api/tasks/${taskToEdit.id}`
+        : "/api/tasks";
 
-      const response = await fetch("/api/tasks", {
-        method: "POST",
+      const method = taskToEdit ? "PUT" : "POST";
+      console.log(`${method}ing task with data:`, values);
+
+      const response = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, tagIds: selectedTags }),
       });
 
       if (!response.ok) {
         const error = await response.text();
-        throw new Error(`Failed to create task: ${error}`);
+        throw new Error(`Failed to ${taskToEdit ? 'update' : 'create'} task: ${error}`);
       }
 
-      const task = await response.json();
-      console.log('Task created:', task);
-
-      // Then associate tags if any are selected
-      if (selectedTags.length > 0) {
-        const tagPromises = selectedTags.map(tagId =>
-          fetch("/api/task-tags", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ taskId: task.id, tagId }),
-          })
-        );
-        await Promise.all(tagPromises);
-      }
-
-      return task;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
@@ -98,14 +99,14 @@ export function TaskForm() {
       setSelectedTags([]);
       toast({
         title: "Success",
-        description: "Task created successfully",
+        description: `Task ${taskToEdit ? 'updated' : 'created'} successfully`,
       });
     },
     onError: (error: Error) => {
-      console.error('Task creation error:', error);
+      console.error('Task mutation error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create task",
+        description: error.message || `Failed to ${taskToEdit ? 'update' : 'create'} task`,
         variant: "destructive",
       });
     },
@@ -249,7 +250,7 @@ export function TaskForm() {
         </div>
 
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Task"}
+          {isSubmitting ? (taskToEdit ? "Updating..." : "Creating...") : (taskToEdit ? "Update Task" : "Create Task")}
         </Button>
       </form>
     </Form>

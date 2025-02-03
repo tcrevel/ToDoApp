@@ -47,7 +47,70 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Tags endpoints
+  app.put("/api/tasks/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { userId, ...taskData } = req.body;
+
+      const [updatedTask] = await db
+        .update(tasks)
+        .set(taskData)
+        .where(eq(tasks.id, id))
+        .returning();
+
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Update task tags if provided
+      if (taskData.tagIds) {
+        // First remove all existing tag associations
+        await db.delete(taskTags).where(eq(taskTags.taskId, id));
+
+        // Then add new ones
+        if (taskData.tagIds.length > 0) {
+          await db.insert(taskTags)
+            .values(
+              taskData.tagIds.map(tagId => ({
+                taskId: id,
+                tagId: tagId
+              }))
+            );
+        }
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      res.status(500).json({ message: "Failed to update task" });
+    }
+  });
+
+  app.delete("/api/tasks/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      // First delete all tag associations
+      await db.delete(taskTags).where(eq(taskTags.taskId, id));
+
+      // Then delete the task
+      const [deletedTask] = await db
+        .delete(tasks)
+        .where(eq(tasks.id, id))
+        .returning();
+
+      if (!deletedTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json(deletedTask);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      res.status(500).json({ message: "Failed to delete task" });
+    }
+  });
+
+  // Tags endpoints (unchanged)
   app.get("/api/tags", async (_req, res) => {
     try {
       const allTags = await db.select().from(tags);
