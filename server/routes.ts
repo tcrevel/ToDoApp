@@ -33,9 +33,13 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/tasks", async (req, res) => {
     try {
+      // Remove any userId if it was sent
+      const { userId, ...taskData } = req.body;
+
       const [newTask] = await db.insert(tasks)
-        .values(req.body)
+        .values(taskData)
         .returning();
+
       res.status(201).json(newTask);
     } catch (error) {
       console.error('Error creating task:', error);

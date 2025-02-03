@@ -24,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { insertTaskSchema } from "@db/schema";
 import type { InsertTask, SelectTag } from "@db/schema";
-import { useAuthStore } from "@/lib/auth";
 
 const CATEGORIES = [
   "Work",
@@ -37,7 +36,6 @@ const CATEGORIES = [
 
 export function TaskForm() {
   const { toast } = useToast();
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
@@ -63,19 +61,13 @@ export function TaskForm() {
   });
 
   const { mutate } = useMutation({
-    mutationFn: async (values: Omit<InsertTask, "userId">) => {
-      const taskData = {
-        ...values,
-        userId: 1, // Default to user ID 1 for now
-      };
+    mutationFn: async (values: InsertTask) => {
+      console.log('Creating task with data:', values);
 
-      console.log('Creating task with data:', taskData);
-
-      // First create the task
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(taskData),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
