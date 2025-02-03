@@ -66,8 +66,10 @@ export function TaskForm() {
     mutationFn: async (values: Omit<InsertTask, "userId">) => {
       const taskData = {
         ...values,
-        userId: user?.uid,
+        userId: 1, // Default to user ID 1 for now
       };
+
+      console.log('Creating task with data:', taskData);
 
       // First create the task
       const response = await fetch("/api/tasks", {
@@ -82,6 +84,7 @@ export function TaskForm() {
       }
 
       const task = await response.json();
+      console.log('Task created:', task);
 
       // Then associate tags if any are selected
       if (selectedTags.length > 0) {
@@ -107,6 +110,7 @@ export function TaskForm() {
       });
     },
     onError: (error: Error) => {
+      console.error('Task creation error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create task",
@@ -117,14 +121,7 @@ export function TaskForm() {
   });
 
   function onSubmit(values: InsertTask) {
-    if (!user?.uid) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to create tasks",
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('Form submitted with values:', values);
     setIsSubmitting(true);
     mutate(values);
   }
