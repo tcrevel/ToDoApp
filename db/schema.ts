@@ -18,7 +18,6 @@ export const tags = pgTable("tags", {
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
   category: text("category").notNull().default("uncategorized"),
@@ -53,18 +52,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   notifications: many(notifications),
 }));
 
-export const tasksRelations = relations(tasks, ({ one, many }) => ({
-  user: one(users, {
-    fields: [tasks.userId],
-    references: [users.id],
-  }),
-  notifications: many(notifications),
-  tags: many(taskTags),
+export const tasksRelations = relations(tasks, ({ many }) => ({
+    tags: many(taskTags),
 }));
 
 export const tagsRelations = relations(tags, ({ many }) => ({
-  tasks: many(taskTags),
+    tasks: many(taskTags),
 }));
+
 
 export const taskTagsRelations = relations(taskTags, ({ one }) => ({
   task: one(tasks, {
@@ -92,11 +87,11 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 
-export const insertTagSchema = createInsertSchema(tags);
-export const selectTagSchema = createSelectSchema(tags);
-
 export const insertTaskSchema = createInsertSchema(tasks);
 export const selectTaskSchema = createSelectSchema(tasks);
+
+export const insertTagSchema = createInsertSchema(tags);
+export const selectTagSchema = createSelectSchema(tags);
 
 export const insertTaskTagSchema = createInsertSchema(taskTags);
 export const selectTaskTagSchema = createSelectSchema(taskTags);
@@ -108,11 +103,11 @@ export const selectNotificationSchema = createSelectSchema(notifications);
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 
-export type InsertTag = typeof tags.$inferInsert;
-export type SelectTag = typeof tags.$inferSelect;
-
 export type InsertTask = typeof tasks.$inferInsert;
 export type SelectTask = typeof tasks.$inferSelect;
+
+export type InsertTag = typeof tags.$inferInsert;
+export type SelectTag = typeof tags.$inferSelect;
 
 export type InsertTaskTag = typeof taskTags.$inferInsert;
 export type SelectTaskTag = typeof taskTags.$inferSelect;
