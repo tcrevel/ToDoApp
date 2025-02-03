@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { insertTaskSchema } from "@db/schema";
 import type { InsertTask, SelectTag } from "@db/schema";
+import { useAuthStore } from "@/lib/auth";
 
 const CATEGORIES = [
   "Work",
@@ -36,18 +37,17 @@ const CATEGORIES = [
 
 export function TaskForm() {
   const { toast } = useToast();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
 
-  const { data: tags } = useQuery<SelectTag[]>({
+  const { data: tags } = useQuery({
     queryKey: ['/api/tags'],
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch tags",
-        variant: "destructive",
-      });
+    queryFn: async () => {
+      const response = await fetch('/api/tags');
+      if (!response.ok) throw new Error('Failed to fetch tags');
+      return response.json() as Promise<SelectTag[]>;
     },
   });
 
@@ -57,20 +57,30 @@ export function TaskForm() {
       title: "",
       description: "",
       priority: "medium",
-      category: "Others",
+      category: "others",
       completed: false,
     },
   });
 
   const { mutate } = useMutation({
-    mutationFn: async (values: InsertTask) => {
+    mutationFn: async (values: Omit<InsertTask, "userId">) => {
+      const taskData = {
+        ...values,
+        userId: user?.uid,
+      };
+
       // First create the task
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(taskData),
       });
-      if (!response.ok) throw new Error("Failed to create task");
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Failed to create task: ${error}`);
+      }
+
       const task = await response.json();
 
       // Then associate tags if any are selected
@@ -88,7 +98,7 @@ export function TaskForm() {
       return task;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["/api/tasks"]);
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       form.reset();
       setSelectedTags([]);
       toast({
@@ -96,10 +106,10 @@ export function TaskForm() {
         description: "Task created successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to create task",
+        description: error.message || "Failed to create task",
         variant: "destructive",
       });
     },
@@ -107,6 +117,14 @@ export function TaskForm() {
   });
 
   function onSubmit(values: InsertTask) {
+    if (!user?.uid) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create tasks",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
     mutate(values);
   }
@@ -143,7 +161,11 @@ export function TaskForm() {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Task description" {...field} />
+                <Textarea 
+                  placeholder="Task description" 
+                  {...field} 
+                  value={field.value || ''} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -205,7 +227,12 @@ export function TaskForm() {
             <FormItem>
               <FormLabel>Due Date</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                <Input 
+                  type="datetime-local" 
+                  {...field} 
+                  value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''} 
+                  onChange={e => field.onChange(e.target.value ? new Date(e.target.value) : null)} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
